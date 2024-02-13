@@ -1,6 +1,7 @@
 import { sql } from '@vercel/postgres';
 import {
   CustomerField,
+  CustomerForm,
   CustomersTableType,
   InvoiceForm,
   InvoicesTable,
@@ -21,7 +22,6 @@ export async function fetchRevenue() {
     // Don't do this in production :)
 
     console.log('Fetching revenue data...');
-    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     const data = await sql<Revenue>`SELECT * FROM revenue`;
 
@@ -151,6 +151,25 @@ export async function fetchInvoicesPages(query: string) {
   }
 }
 
+export async function fetchCustomersPages(query: string) {
+  noStore();
+
+  try {
+    const count = await sql`SELECT COUNT(*)
+    FROM customers
+    WHERE 
+    name ILIKE ${`%${query}%`} OR
+    email ILIKE ${`%${query}%`}
+  `;
+
+    const totalPages = Math.ceil(Number(count.rows[0].count) / ITEMS_PER_PAGE);
+    return totalPages;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch total number of customers.');
+  }
+}
+
 export async function fetchInvoiceById(id: string) {
   noStore();
   try {
@@ -177,16 +196,42 @@ export async function fetchInvoiceById(id: string) {
   }
 }
 
+export async function fetchCustomerById(id: string) {
+  noStore();
+  try {
+    const data = await sql<CustomerForm>`
+      SELECT
+        customers.id,
+        customers.name,
+        customers.email
+      FROM customers
+      WHERE customers.id = ${id};
+    `;
+
+    const customer = data.rows.map((customer) => ({
+      ...customer,
+      // Convert amount from cents to dollars
+    }));
+    console.log(customer);
+    return customer[0];
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch customer.');
+  }
+}
+
 export async function fetchCustomers() {
+  noStore();
   try {
     const data = await sql<CustomerField>`
       SELECT
         id,
         name
       FROM customers
-      ORDER BY name ASC
+      ORDER BY name
+      
     `;
-
+    console.log(data);
     const customers = data.rows;
     return customers;
   } catch (err) {
@@ -195,8 +240,12 @@ export async function fetchCustomers() {
   }
 }
 
-export async function fetchFilteredCustomers(query: string) {
+export async function fetchFilteredCustomers(
+  query: string,
+  currentPage: number,
+) {
   noStore();
+  const offset = (currentPage - 1) * ITEMS_PER_PAGE;
   try {
     const data = await sql<CustomersTableType>`
 		SELECT
@@ -210,10 +259,11 @@ export async function fetchFilteredCustomers(query: string) {
 		FROM customers
 		LEFT JOIN invoices ON customers.id = invoices.customer_id
 		WHERE
-		  customers.name ILIKE ${`%${query}%`} OR
+		customers.name ILIKE ${`%${query}%`} OR
         customers.email ILIKE ${`%${query}%`}
 		GROUP BY customers.id, customers.name, customers.email, customers.image_url
 		ORDER BY customers.name ASC
+		LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
 	  `;
 
     const customers = data.rows.map((customer) => ({

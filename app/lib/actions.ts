@@ -6,8 +6,10 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { signIn } from '@/auth';
 import { AuthError } from 'next-auth';
+import path from 'path';
+import fs from 'fs';
 
-export type State = {
+export type StateInvoice = {
   errors?: {
     customerId?: string[];
     amount?: string[];
@@ -15,8 +17,34 @@ export type State = {
   };
   message?: string | null;
 };
+export type StateCustomer = {
+  errors?: {
+    name?: string[];
+    email?: string[];
+  };
+  message?: string | null;
+};
 
-const FormSchema = z.object({
+const getFolderFiles = async (): Promise<string[]> => {
+  const folderPathAbsolute = path.resolve(process.cwd(), 'public\\customers');
+
+  return new Promise((resolve, reject) => {
+    fs.readdir(folderPathAbsolute, (err, files) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      const filePaths = files.map((file) => {
+        const absolutePath = path.resolve(folderPathAbsolute, file);
+        return path.basename(absolutePath);
+      });
+      resolve(filePaths);
+    });
+  });
+};
+
+const FormSchemaInvoice = z.object({
   id: z.string(),
   customerId: z.string({
     invalid_type_error: 'Please select a customer.',
@@ -30,9 +58,60 @@ const FormSchema = z.object({
   date: z.string(),
 });
 
-const CreateInvoice = FormSchema.omit({ id: true, date: true });
+const FormSchemaCustomer = z.object({
+  id: z.string(),
+  name: z.string().min(1, 'Please enter customer name.'),
+  email: z
+    .string()
+    .min(1, { message: 'This field has to be filled.' })
+    .email('This is not a valid email.'),
+});
 
-export async function createInvoice(prevState: State, formData: FormData) {
+const CreateInvoice = FormSchemaInvoice.omit({ id: true, date: true });
+
+const CreateCustomer = FormSchemaCustomer.omit({ id: true });
+
+export async function createCustomer(
+  prevState: StateCustomer,
+  formData: FormData,
+) {
+  const validatedFields = CreateCustomer.safeParse({
+    name: formData.get('name'),
+    email: formData.get('email'),
+  });
+  // console.log(validatedFields);
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Create Customer.',
+    };
+  }
+  const { name, email } = validatedFields.data;
+
+  const imageNames = await getFolderFiles();
+  const randomIndex = Math.floor(Math.random() * imageNames.length);
+  const imageUrl = `/customers/${imageNames[randomIndex]}`;
+
+  try {
+    await sql`
+    INSERT INTO customers (name, email, image_url)
+    VALUES (${name}, ${email}, ${imageUrl})
+  `;
+  } catch (error) {
+    console.log(error);
+    return {
+      message: 'Database Error: Failed to Create Customer.',
+    };
+  }
+  revalidatePath('/dashboard/customers');
+  redirect('/dashboard/customers');
+}
+
+export async function createInvoice(
+  prevState: StateInvoice,
+  formData: FormData,
+) {
   const validatedFields = CreateInvoice.safeParse({
     customerId: formData.get('customerId'),
     amount: formData.get('amount'),
@@ -63,11 +142,45 @@ export async function createInvoice(prevState: State, formData: FormData) {
   redirect('/dashboard/invoices');
 }
 
-const UpdateInvoice = FormSchema.omit({ id: true, date: true });
+const UpdateCustomer = FormSchemaCustomer.omit({ id: true });
+
+export async function updateCustomer(
+  id: string,
+  prevState: StateCustomer,
+  formData: FormData,
+) {
+  const validatedFields = UpdateCustomer.safeParse({
+    name: formData.get('name'),
+    email: formData.get('email'),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Update Invoice.',
+    };
+  }
+  const { name, email } = validatedFields.data;
+
+  try {
+    await sql`
+      UPDATE customers
+      SET name = ${name}, email = ${email}
+      WHERE id = ${id}
+    `;
+  } catch (error) {
+    return { message: 'Database Error: Failed to Update Customer.' };
+  }
+
+  revalidatePath('/dashboard/customers');
+  redirect('/dashboard/customers');
+}
+
+const UpdateInvoice = FormSchemaInvoice.omit({ id: true, date: true });
 
 export async function updateInvoice(
   id: string,
-  prevState: State,
+  prevState: StateInvoice,
   formData: FormData,
 ) {
   const validatedFields = UpdateInvoice.safeParse({
@@ -107,6 +220,16 @@ export async function deleteInvoice(id: string) {
     return { message: 'Deleted Invoice.' };
   } catch (error) {
     return { message: 'Database Error: Failed to Delete Invoice.' };
+  }
+}
+
+export async function deleteCustomer(id: string) {
+  try {
+    await sql`DELETE FROM customers WHERE id = ${id}`;
+    revalidatePath('/dashboard/customers');
+    return { message: 'Deleted Customer.' };
+  } catch (error) {
+    return { message: 'Database Error: Failed to Delete Customer.' };
   }
 }
 
