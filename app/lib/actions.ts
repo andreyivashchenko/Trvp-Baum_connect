@@ -26,7 +26,10 @@ export type StateCustomer = {
 };
 
 const getFolderFiles = async (): Promise<string[]> => {
-  const folderPathAbsolute = path.resolve(process.cwd(), 'public\\customers');
+  const folderPathAbsolute = path.resolve(
+    process.cwd(),
+    `public${path.sep}customers`,
+  );
 
   return new Promise((resolve, reject) => {
     fs.readdir(folderPathAbsolute, (err, files) => {
