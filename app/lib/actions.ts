@@ -6,8 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { signIn } from '@/auth';
 import { AuthError } from 'next-auth';
-import path from 'path';
-import fs from 'fs';
+import { imageUrls } from '@/app/lib/utils';
 
 export type StateInvoice = {
   errors?: {
@@ -23,28 +22,6 @@ export type StateCustomer = {
     email?: string[];
   };
   message?: string | null;
-};
-
-const getFolderFiles = async (): Promise<string[]> => {
-  const folderPathAbsolute = path.resolve(
-    process.cwd(),
-    `public${path.sep}customers`,
-  );
-
-  return new Promise((resolve, reject) => {
-    fs.readdir(folderPathAbsolute, (err, files) => {
-      if (err) {
-        reject(err);
-        return;
-      }
-
-      const filePaths = files.map((file) => {
-        const absolutePath = path.resolve(folderPathAbsolute, file);
-        return path.basename(absolutePath);
-      });
-      resolve(filePaths);
-    });
-  });
 };
 
 const FormSchemaInvoice = z.object({
@@ -92,9 +69,8 @@ export async function createCustomer(
   }
   const { name, email } = validatedFields.data;
 
-  const imageNames = await getFolderFiles();
-  const randomIndex = Math.floor(Math.random() * imageNames.length);
-  const imageUrl = `/customers/${imageNames[randomIndex]}`;
+  const randomIndex = Math.floor(Math.random() * imageUrls.length);
+  const imageUrl = imageUrls[randomIndex];
 
   try {
     await sql`
