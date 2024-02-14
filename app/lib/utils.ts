@@ -70,16 +70,16 @@ export const generatePagination = (currentPage: number, totalPages: number) => {
 };
 
 export const imageUrls = [
-  '/customers/amy-burns.png',
-  '/customers/balazs-orban.png',
-  '/customers/delba-de-oliveira.png',
-  '/customers/emil-kowalski.png',
-  '/customers/evil-rabbit.png',
-  '/customers/guillermo-rauch.png',
-  '/customers/hector-simpson.png',
-  '/customers/jared-palmer.png',
-  '/customers/lee-robinson.png',
-  '/customers/michael-novotny.png',
-  '/customers/steph-dietz.png',
-  '/customers/steven-tey.png',
+  '/masters/amy-burns.png',
+  '/masters/balazs-orban.png',
+  '/masters/delba-de-oliveira.png',
+  '/masters/emil-kowalski.png',
+  '/masters/evil-rabbit.png',
+  '/masters/guillermo-rauch.png',
+  '/masters/hector-simpson.png',
+  '/masters/jared-palmer.png',
+  '/masters/lee-robinson.png',
+  '/masters/michael-novotny.png',
+  '/masters/steph-dietz.png',
+  '/masters/steven-tey.png',
 ];

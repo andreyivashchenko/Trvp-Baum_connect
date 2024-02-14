@@ -1,7 +1,3 @@
-// This file contains type definitions for your data.
-// It describes the shape of the data, and what data type each property should accept.
-// For simplicity of teaching, we're manually defining these types.
-// However, these types are generated automatically if you're using an ORM such as Prisma.
 export type User = {
   id: string;
   name: string;
@@ -16,13 +12,12 @@ export type Customer = {
   image_url: string;
 };
 
-export type Invoice = {
+export type Application = {
   id: string;
   customer_id: string;
   amount: number;
   date: string;
-  // In TypeScript, this is called a string union type.
-  // It means that the "status" property can only be one of the two strings: 'pending' or 'paid'.
+
   status: 'pending' | 'paid';
 };
 
@@ -31,7 +26,7 @@ export type Revenue = {
   revenue: number;
 };
 
-export type LatestInvoice = {
+export type LatestApplication = {
   id: string;
   name: string;
   image_url: string;
@@ -40,11 +35,11 @@ export type LatestInvoice = {
 };
 
 // The database returns a number for amount, but we later format it to a string with the formatCurrency function
-export type LatestInvoiceRaw = Omit<LatestInvoice, 'amount'> & {
+export type LatestApplicationRaw = Omit<LatestApplication, 'amount'> & {
   amount: number;
 };
 
-export type InvoicesTable = {
+export type ApplicationsTable = {
   id: string;
   customer_id: string;
   name: string;
@@ -56,7 +51,7 @@ export type InvoicesTable = {
   complexity: number;
 };
 
-export type CustomersTableType = {
+export type MastersTableType = {
   id: string;
   name: string;
   email: string;
@@ -68,7 +63,7 @@ export type CustomersTableType = {
   workload: number;
 };
 
-export type FormattedCustomersTable = {
+export type FormattedMastersTable = {
   id: string;
   name: string;
   email: string;
@@ -78,19 +73,20 @@ export type FormattedCustomersTable = {
   total_paid: string;
 };
 
-export type CustomerField = {
+export type MasterField = {
   id: string;
   name: string;
 };
 
-export type InvoiceForm = {
+export type ApplicationForm = {
   id: string;
   customer_id: string;
   amount: number;
   status: 'pending' | 'paid';
   complexity: number;
 };
-export type CustomerForm = {
+
+export type MasterForm = {
   id: string;
   name: string;
   email: number;

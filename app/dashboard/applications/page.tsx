@@ -1,11 +1,11 @@
 import Search from '@/app/ui/search';
-import { CreateInvoice } from '@/app/ui/invoices/buttons';
+import { CreateApplication } from '@/app/ui/applications/buttons';
 import { lusitana } from '@/app/ui/fonts';
 import { Suspense } from 'react';
-import Table from '@/app/ui/invoices/table';
-import { InvoicesTableSkeleton } from '@/app/ui/skeletons';
-import { fetchInvoicesPages } from '@/app/lib/data';
-import Pagination from '@/app/ui/invoices/pagination';
+import Table from '@/app/ui/applications/table';
+import { ApplicationsTableSkeleton } from '@/app/ui/skeletons';
+import { fetchApplicationsPages } from '@/app/lib/data';
+import Pagination from '@/app/ui/applications/pagination';
 
 export default async function Page({
   searchParams,
@@ -17,18 +17,21 @@ export default async function Page({
 }) {
   const query = searchParams?.query || '';
   const currentPage = Number(searchParams?.page) || 1;
-  const totalPages = await fetchInvoicesPages(query);
+  const totalPages = await fetchApplicationsPages(query);
 
   return (
     <div className="w-full">
       <div className="flex w-full items-center justify-between">
-        <h1 className={`${lusitana.className} text-2xl`}>Invoices</h1>
+        <h1 className={`${lusitana.className} text-2xl`}>Applications</h1>
       </div>
       <div className="mt-4 flex items-center justify-between gap-2 md:mt-8">
-        <Search placeholder="Search invoices..." />
-        <CreateInvoice />
+        <Search placeholder="Search applications..." />
+        <CreateApplication />
       </div>
-      <Suspense key={query + currentPage} fallback={<InvoicesTableSkeleton />}>
+      <Suspense
+        key={query + currentPage}
+        fallback={<ApplicationsTableSkeleton />}
+      >
         <Table query={query} currentPage={currentPage} />
       </Suspense>
       <div className="mt-5 flex w-full justify-center">

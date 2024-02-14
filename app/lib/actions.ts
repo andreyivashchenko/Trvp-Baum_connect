@@ -9,19 +9,19 @@ import { AuthError } from 'next-auth';
 import { imageUrls } from '@/app/lib/utils';
 import {
   fetchActualWorkload,
-  fetchInvoiceStateBeforeByInvoiceId,
+  fetchApplicationStateBeforeByApplicationId,
 } from '@/app/lib/data';
 
-export type StateInvoice = {
+export type StateApplication = {
   errors?: {
-    customerId?: string[];
+    masterId?: string[];
     amount?: string[];
     status?: string[];
     complexity?: string[];
   };
   message?: string | null;
 };
-export type StateCustomer = {
+export type StateMaster = {
   errors?: {
     name?: string[];
     email?: string[];
@@ -29,16 +29,16 @@ export type StateCustomer = {
   message?: string | null;
 };
 
-const FormSchemaInvoice = z.object({
+const FormSchemaApplication = z.object({
   id: z.string(),
-  customerId: z.string({
-    invalid_type_error: 'Please select a customer.',
+  masterId: z.string({
+    invalid_type_error: 'Please select a master.',
   }),
   amount: z.coerce
     .number()
     .gt(0, { message: 'Please enter an amount greater than $0.' }),
   status: z.enum(['pending', 'paid'], {
-    invalid_type_error: 'Please select an invoice status.',
+    invalid_type_error: 'Please select an application status.',
   }),
   complexity: z.coerce
     .number()
@@ -47,24 +47,21 @@ const FormSchemaInvoice = z.object({
   date: z.string(),
 });
 
-const FormSchemaCustomer = z.object({
+const FormSchemaMaster = z.object({
   id: z.string(),
-  name: z.string().min(1, 'Please enter customer name.'),
+  name: z.string().min(1, 'Please enter master name.'),
   email: z
     .string()
     .min(1, { message: 'This field has to be filled.' })
     .email('This is not a valid email.'),
 });
 
-const CreateInvoice = FormSchemaInvoice.omit({ id: true, date: true });
+const CreateApplication = FormSchemaApplication.omit({ id: true, date: true });
 
-const CreateCustomer = FormSchemaCustomer.omit({ id: true });
+const CreateMaster = FormSchemaMaster.omit({ id: true });
 
-export async function createCustomer(
-  prevState: StateCustomer,
-  formData: FormData,
-) {
-  const validatedFields = CreateCustomer.safeParse({
+export async function createMaster(prevState: StateMaster, formData: FormData) {
+  const validatedFields = CreateMaster.safeParse({
     name: formData.get('name'),
     email: formData.get('email'),
   });
@@ -73,7 +70,7 @@ export async function createCustomer(
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Missing Fields. Failed to Create Customer.',
+      message: 'Missing Fields. Failed to Create Master.',
     };
   }
   const { name, email } = validatedFields.data;
@@ -89,19 +86,19 @@ export async function createCustomer(
   } catch (error) {
     console.log(error);
     return {
-      message: 'Database Error: Failed to Create Customer.',
+      message: 'Database Error: Failed to Create Master.',
     };
   }
-  revalidatePath('/dashboard/customers');
-  redirect('/dashboard/customers');
+  revalidatePath('/dashboard/masters');
+  redirect('/dashboard/masters');
 }
 
-export async function createInvoice(
-  prevState: StateInvoice,
+export async function createApplication(
+  prevState: StateApplication,
   formData: FormData,
 ) {
-  const validatedFields = CreateInvoice.safeParse({
-    customerId: formData.get('customerId'),
+  const validatedFields = CreateApplication.safeParse({
+    masterId: formData.get('masterId'),
     amount: formData.get('amount'),
     status: formData.get('status'),
     complexity: formData.get('complexity'),
@@ -109,17 +106,17 @@ export async function createInvoice(
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Missing Fields. Failed to Create Invoice.',
+      message: 'Missing Fields. Failed to Create Application.',
     };
   }
-  const { customerId, amount, status, complexity } = validatedFields.data;
+  const { masterId, amount, status, complexity } = validatedFields.data;
   const amountInCents = amount * 100;
   const date = new Date().toISOString().split('T')[0];
 
   try {
-    const workload = await fetchActualWorkload(customerId);
+    const workload = await fetchActualWorkload(masterId);
     if (workload + complexity >= 21 && status == 'pending') {
-      throw Error('Reduce complexity, worker is not omnipotent');
+      throw Error('Reduce complexity, master is not omnipotent');
     }
   } catch (e: any) {
     return { message: e.message };
@@ -128,25 +125,25 @@ export async function createInvoice(
   try {
     await sql`
     INSERT INTO invoices (customer_id, amount, status, date, complexity)
-    VALUES (${customerId}, ${amountInCents}, ${status}, ${date}, ${complexity})
+    VALUES (${masterId}, ${amountInCents}, ${status}, ${date}, ${complexity})
   `;
   } catch (error) {
     return {
-      message: 'Database Error: Failed to Create Invoice.',
+      message: 'Database Error: Failed to Create Application.',
     };
   }
-  revalidatePath('/dashboard/invoices');
-  redirect('/dashboard/invoices');
+  revalidatePath('/dashboard/applications');
+  redirect('/dashboard/applications');
 }
 
-const UpdateCustomer = FormSchemaCustomer.omit({ id: true });
+const UpdateMaster = FormSchemaMaster.omit({ id: true });
 
-export async function updateCustomer(
+export async function updateMaster(
   id: string,
-  prevState: StateCustomer,
+  prevState: StateMaster,
   formData: FormData,
 ) {
-  const validatedFields = UpdateCustomer.safeParse({
+  const validatedFields = UpdateMaster.safeParse({
     name: formData.get('name'),
     email: formData.get('email'),
   });
@@ -154,7 +151,7 @@ export async function updateCustomer(
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Missing Fields. Failed to Update Invoice.',
+      message: 'Missing Fields. Failed to Update Application.',
     };
   }
   const { name, email } = validatedFields.data;
@@ -166,22 +163,22 @@ export async function updateCustomer(
       WHERE id = ${id}
     `;
   } catch (error) {
-    return { message: 'Database Error: Failed to Update Customer.' };
+    return { message: 'Database Error: Failed to Update Master.' };
   }
 
-  revalidatePath('/dashboard/customers');
-  redirect('/dashboard/customers');
+  revalidatePath('/dashboard/masters');
+  redirect('/dashboard/masters');
 }
 
-const UpdateInvoice = FormSchemaInvoice.omit({ id: true, date: true });
+const UpdateApplication = FormSchemaApplication.omit({ id: true, date: true });
 
-export async function updateInvoice(
+export async function updateApplication(
   id: string,
-  prevState: StateInvoice,
+  prevState: StateApplication,
   formData: FormData,
 ) {
-  const validatedFields = UpdateInvoice.safeParse({
-    customerId: formData.get('customerId'),
+  const validatedFields = UpdateApplication.safeParse({
+    masterId: formData.get('masterId'),
     amount: formData.get('amount'),
     status: formData.get('status'),
     complexity: formData.get('complexity'),
@@ -190,26 +187,27 @@ export async function updateInvoice(
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Missing Fields. Failed to Update Invoice.',
+      message: 'Missing Fields. Failed to Update Application.',
     };
   }
 
-  const { customerId, amount, status, complexity } = validatedFields.data;
+  const { masterId, amount, status, complexity } = validatedFields.data;
   const amountInCents = amount * 100;
   try {
-    let workload = await fetchActualWorkload(customerId);
-    const invoiceStateBefore = await fetchInvoiceStateBeforeByInvoiceId(id);
+    let workload = await fetchActualWorkload(masterId);
+    const applicationStateBefore =
+      await fetchApplicationStateBeforeByApplicationId(id);
 
-    if (customerId === invoiceStateBefore.customer_id) {
-      if (status === invoiceStateBefore.status) {
-        workload = workload - invoiceStateBefore.complexity;
+    if (masterId === applicationStateBefore.customer_id) {
+      if (status === applicationStateBefore.status) {
+        workload = workload - applicationStateBefore.complexity;
       }
       if (workload + complexity >= 21 && status === 'pending') {
-        throw Error('Reduce complexity, worker is not omnipotent');
+        throw Error('Reduce complexity, master is not omnipotent');
       }
     } else {
       if (workload + complexity >= 21 && status === 'pending') {
-        throw Error('Reduce complexity, worker is not omnipotent');
+        throw Error('Reduce complexity, master is not omnipotent');
       }
     }
   } catch (e: any) {
@@ -218,34 +216,34 @@ export async function updateInvoice(
   try {
     await sql`
       UPDATE invoices
-      SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}, complexity = ${complexity}
+      SET customer_id = ${masterId}, amount = ${amountInCents}, status = ${status}, complexity = ${complexity}
       WHERE id = ${id}
     `;
   } catch (error) {
-    return { message: 'Database Error: Failed to Update Invoice.' };
+    return { message: 'Database Error: Failed to Update Application.' };
   }
 
-  revalidatePath('/dashboard/invoices');
-  redirect('/dashboard/invoices');
+  revalidatePath('/dashboard/applications');
+  redirect('/dashboard/applications');
 }
 
-export async function deleteInvoice(id: string) {
+export async function deleteApplication(id: string) {
   try {
     await sql`DELETE FROM invoices WHERE id = ${id}`;
-    revalidatePath('/dashboard/invoices');
-    return { message: 'Deleted Invoice.' };
+    revalidatePath('/dashboard/applications');
+    return { message: 'Deleted Application.' };
   } catch (error) {
-    return { message: 'Database Error: Failed to Delete Invoice.' };
+    return { message: 'Database Error: Failed to Delete Application.' };
   }
 }
 
-export async function deleteCustomer(id: string) {
+export async function deleteMaster(id: string) {
   try {
     await sql`DELETE FROM customers WHERE id = ${id}`;
-    revalidatePath('/dashboard/customers');
-    return { message: 'Deleted Customer.' };
+    revalidatePath('/dashboard/masters');
+    return { message: 'Deleted Master.' };
   } catch (error) {
-    return { message: 'Database Error: Failed to Delete Customer.' };
+    return { message: 'Database Error: Failed to Delete Master.' };
   }
 }
 

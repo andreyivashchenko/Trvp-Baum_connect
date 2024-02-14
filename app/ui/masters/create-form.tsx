@@ -3,13 +3,13 @@
 import Link from 'next/link';
 import { CurrencyDollarIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/app/ui/button';
-import { createCustomer } from '@/app/lib/actions';
+import { createMaster } from '@/app/lib/actions';
 import { useFormState } from 'react-dom';
 
 export default function Form() {
   const initialState = { message: null, errors: {} };
 
-  const [state, dispatch] = useFormState(createCustomer, initialState);
+  const [state, dispatch] = useFormState(createMaster, initialState);
   console.log(state);
   return (
     <form action={dispatch}>
@@ -17,7 +17,7 @@ export default function Form() {
         {/* Customer name */}
         <div className="mb-4">
           <label htmlFor="name" className="mb-2 block text-sm font-medium">
-            Enter customer name
+            Enter master name
           </label>
           <div className="relative mt-2 rounded-md">
             <div className="relative">
@@ -46,7 +46,7 @@ export default function Form() {
         {/* Customer email */}
         <div className="mb-4">
           <label htmlFor="email" className="mb-2 block text-sm font-medium">
-            Enter customer email
+            Enter master email
           </label>
           <div className="relative mt-2 rounded-md">
             <div className="relative">
@@ -74,12 +74,12 @@ export default function Form() {
       </div>
       <div className="mt-6 flex justify-end gap-4">
         <Link
-          href="/dashboard/customers"
+          href="/dashboard/masters"
           className="flex h-10 items-center rounded-lg bg-gray-100 px-4 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200"
         >
           Cancel
         </Link>
-        <Button type="submit">Create Customer</Button>
+        <Button type="submit">Add Master</Button>
       </div>
     </form>
   );

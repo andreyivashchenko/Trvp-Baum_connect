@@ -1,59 +1,65 @@
 'use client';
 
-import { CustomerField } from '@/app/lib/definitions';
-import Link from 'next/link';
+import { ApplicationForm, MasterField } from '@/app/lib/definitions';
 import {
   CheckIcon,
   ClockIcon,
   CurrencyDollarIcon,
   UserCircleIcon,
 } from '@heroicons/react/24/outline';
+import Link from 'next/link';
 import { Button } from '@/app/ui/button';
-import { createInvoice } from '@/app/lib/actions';
+import { updateApplication } from '@/app/lib/actions';
 import { useFormState } from 'react-dom';
 
-export default function Form({ customers }: { customers: CustomerField[] }) {
+export default function EditInvoiceForm({
+  application,
+  masters,
+}: {
+  application: ApplicationForm;
+  masters: MasterField[];
+}) {
   const initialState = { message: null, errors: {} };
+  const updateApplicationWithId = updateApplication.bind(null, application.id);
+  const [state, dispatch] = useFormState(updateApplicationWithId, initialState);
 
-  const [state, dispatch] = useFormState(createInvoice, initialState);
   return (
     <form action={dispatch}>
       <div className="rounded-md bg-gray-50 p-4 md:p-6">
         {/* Customer Name */}
         <div className="mb-4">
-          <label htmlFor="customer" className="mb-2 block text-sm font-medium">
-            Choose customer
+          <label htmlFor="master" className="mb-2 block text-sm font-medium">
+            Choose master
           </label>
           <div className="relative">
             <select
-              id="customer"
-              name="customerId"
+              id="master"
+              name="masterId"
               className="peer block w-full cursor-pointer rounded-md border border-gray-200 py-2 pl-10 text-sm outline-2 placeholder:text-gray-500"
-              defaultValue=""
-              aria-describedby="customer-error"
+              defaultValue={application.customer_id}
+              aria-describedby="master-error"
             >
               <option value="" disabled>
-                Select a customer
+                Select a master
               </option>
-              {customers.map((customer) => (
-                <option key={customer.id} value={customer.id}>
-                  {customer.name}
+              {masters.map((master) => (
+                <option key={master.id} value={master.id}>
+                  {master.name}
                 </option>
               ))}
             </select>
             <UserCircleIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500" />
           </div>
-          <div id="customer-error" aria-live="polite" aria-atomic="true">
-            {state.errors?.customerId &&
-              state.errors.customerId.map((error: string) => (
-                <p className="mt-2 text-sm text-red-500" key={error}>
-                  {error}
-                </p>
-              ))}
-          </div>
+        </div>
+        <div id="master-error" aria-live="polite" aria-atomic="true">
+          {state.errors?.masterId &&
+            state.errors.masterId.map((error: string) => (
+              <p className="mt-2 text-sm text-red-500" key={error}>
+                {error}
+              </p>
+            ))}
         </div>
 
-        {/* Invoice Amount */}
         <div className="mb-4">
           <label htmlFor="amount" className="mb-2 block text-sm font-medium">
             Choose an amount
@@ -65,6 +71,7 @@ export default function Form({ customers }: { customers: CustomerField[] }) {
                 name="amount"
                 type="number"
                 step="0.01"
+                defaultValue={application.amount}
                 placeholder="Enter USD amount"
                 className="peer block w-full rounded-md border border-gray-200 py-2 pl-10 text-sm outline-2 placeholder:text-gray-500"
                 aria-describedby="amount-error"
@@ -96,6 +103,7 @@ export default function Form({ customers }: { customers: CustomerField[] }) {
                 name="complexity"
                 type="number"
                 step="0.01"
+                defaultValue={application.complexity}
                 placeholder="Enter complexity"
                 className="peer block w-full rounded-md border border-gray-200 py-2 pl-10 text-sm outline-2 placeholder:text-gray-500"
                 aria-describedby="complexity-error"
@@ -113,10 +121,9 @@ export default function Form({ customers }: { customers: CustomerField[] }) {
           </div>
         </div>
 
-        {/* Invoice Status */}
         <fieldset>
           <legend className="mb-2 block text-sm font-medium">
-            Set the invoice status
+            Set the application status
           </legend>
           <div className="rounded-md border border-gray-200 bg-white px-[14px] py-3">
             <div className="flex gap-4">
@@ -126,6 +133,7 @@ export default function Form({ customers }: { customers: CustomerField[] }) {
                   name="status"
                   type="radio"
                   value="pending"
+                  defaultChecked={application.status === 'pending'}
                   className="h-4 w-4 cursor-pointer border-gray-300 bg-gray-100 text-gray-600 focus:ring-2"
                   aria-describedby="status-error"
                 />
@@ -142,8 +150,8 @@ export default function Form({ customers }: { customers: CustomerField[] }) {
                   name="status"
                   type="radio"
                   value="paid"
+                  defaultChecked={application.status === 'paid'}
                   className="h-4 w-4 cursor-pointer border-gray-300 bg-gray-100 text-gray-600 focus:ring-2"
-                  aria-describedby="status-error"
                 />
                 <label
                   htmlFor="paid"
@@ -171,12 +179,12 @@ export default function Form({ customers }: { customers: CustomerField[] }) {
       </div>
       <div className="mt-6 flex justify-end gap-4">
         <Link
-          href="/dashboard/invoices"
+          href="/dashboard/applications"
           className="flex h-10 items-center rounded-lg bg-gray-100 px-4 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200"
         >
           Cancel
         </Link>
-        <Button type="submit">Create Invoice</Button>
+        <Button type="submit">Edit Application</Button>
       </div>
     </form>
   );

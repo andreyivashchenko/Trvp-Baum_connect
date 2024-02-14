@@ -1,15 +1,15 @@
 import Image from 'next/image';
-import { fetchFilteredCustomers } from '@/app/lib/data';
-import { DeleteCustomer, UpdateCustomer } from '@/app/ui/invoices/buttons';
+import { fetchFilteredMasters } from '@/app/lib/data';
+import { DeleteMaster, UpdateMaster } from '@/app/ui/applications/buttons';
 
-export default async function CustomersTable({
+export default async function MastersTable({
   query,
   currentPage,
 }: {
   query: string;
   currentPage: number;
 }) {
-  const customers = await fetchFilteredCustomers(query, currentPage);
+  const masters = await fetchFilteredMasters(query, currentPage);
 
   return (
     <div className="w-full">
@@ -18,9 +18,9 @@ export default async function CustomersTable({
           <div className="inline-block min-w-full align-middle">
             <div className="overflow-hidden rounded-md bg-gray-50 p-2 md:pt-0">
               <div className="md:hidden">
-                {customers?.map((customer) => (
+                {masters?.map((master) => (
                   <div
-                    key={customer.id}
+                    key={master.id}
                     className="mb-2 w-full rounded-md bg-white p-4"
                   >
                     <div className="flex items-center justify-between border-b pb-4">
@@ -28,38 +28,36 @@ export default async function CustomersTable({
                         <div className="mb-2 flex items-center">
                           <div className="flex items-center gap-3">
                             <Image
-                              src={customer.image_url}
+                              src={master.image_url}
                               className="rounded-full"
-                              alt={`${customer.name}'s profile picture`}
+                              alt={`${master.name}'s profile picture`}
                               width={28}
                               height={28}
                             />
-                            <p>{customer.name}</p>
+                            <p>{master.name}</p>
                           </div>
                         </div>
-                        <p className="text-sm text-gray-500">
-                          {customer.email}
-                        </p>
+                        <p className="text-sm text-gray-500">{master.email}</p>
                       </div>
                     </div>
                     <div className="flex w-full items-center justify-between border-b py-5">
                       <div className="flex w-1/3 flex-col">
                         <p className="text-xs">Pending</p>
-                        <p className="font-medium">{customer.total_pending}</p>
+                        <p className="font-medium">{master.total_pending}</p>
                       </div>
                       <div className="flex w-1/3 flex-col">
                         <p className="text-xs">Paid</p>
-                        <p className="font-medium">{customer.total_paid}</p>
+                        <p className="font-medium">{master.total_paid}</p>
                       </div>
                       <div className="flex w-1/3 flex-col">
                         <p className="text-xs">Workload</p>
                         <p className="font-medium">
-                          {customer.total_workload}/{customer.workload}
+                          {master.total_workload}/{master.workload}
                         </p>
                       </div>
                     </div>
                     <div className="pt-4 text-sm">
-                      <p>{customer.total_invoices} invoices</p>
+                      <p>{master.total_invoices} applications</p>
                     </div>
                   </div>
                 ))}
@@ -74,7 +72,7 @@ export default async function CustomersTable({
                       Email
                     </th>
                     <th scope="col" className="px-3 py-5 font-medium">
-                      Total Invoices
+                      Total Applications
                     </th>
                     <th scope="col" className="px-3 py-5 font-medium">
                       Total Pending
@@ -89,39 +87,39 @@ export default async function CustomersTable({
                 </thead>
 
                 <tbody className="divide-y divide-gray-200 text-gray-900">
-                  {customers.map((customer) => (
-                    <tr key={customer.id} className="group">
+                  {masters.map((master) => (
+                    <tr key={master.id} className="group">
                       <td className="whitespace-nowrap bg-white py-5 pl-4 pr-3 text-sm text-black group-first-of-type:rounded-md group-last-of-type:rounded-md sm:pl-6">
                         <div className="flex items-center gap-3">
                           <Image
-                            src={customer.image_url}
+                            src={master.image_url}
                             className="rounded-full"
-                            alt={`${customer.name}'s profile picture`}
+                            alt={`${master.name}'s profile picture`}
                             width={28}
                             height={28}
                           />
-                          <p>{customer.name}</p>
+                          <p>{master.name}</p>
                         </div>
                       </td>
                       <td className="whitespace-nowrap bg-white px-4 py-5 text-sm">
-                        {customer.email}
+                        {master.email}
                       </td>
                       <td className="whitespace-nowrap bg-white px-4 py-5 text-sm">
-                        {customer.total_invoices}
+                        {master.total_invoices}
                       </td>
                       <td className="whitespace-nowrap bg-white px-4 py-5 text-sm">
-                        {customer.total_pending}
+                        {master.total_pending}
                       </td>
                       <td className="whitespace-nowrap bg-white px-4 py-5 text-sm ">
-                        {customer.total_paid}
+                        {master.total_paid}
                       </td>
                       <td className="whitespace-nowrap bg-white px-4 py-5 text-sm ">
-                        {customer.total_workload}/{customer.workload}
+                        {master.total_workload}/{master.workload}
                       </td>
                       <td className="whitespace-nowrap bg-white py-3 pl-6 pr-3 group-first-of-type:rounded-md group-last-of-type:rounded-md">
                         <div className="flex justify-end gap-3">
-                          <UpdateCustomer id={customer.id} />
-                          <DeleteCustomer id={customer.id} />
+                          <UpdateMaster id={master.id} />
+                          <DeleteMaster id={master.id} />
                         </div>
                       </td>
                     </tr>

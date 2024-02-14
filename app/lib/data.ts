@@ -1,11 +1,11 @@
 import { sql } from '@vercel/postgres';
 import {
-  CustomerField,
-  CustomerForm,
-  CustomersTableType,
-  InvoiceForm,
-  InvoicesTable,
-  LatestInvoiceRaw,
+  ApplicationForm,
+  ApplicationsTable,
+  LatestApplicationRaw,
+  MasterField,
+  MasterForm,
+  MastersTableType,
   Revenue,
   User,
 } from './definitions';
@@ -13,14 +13,8 @@ import { formatCurrency } from './utils';
 import { unstable_noStore as noStore } from 'next/cache';
 
 export async function fetchRevenue() {
-  // Add noStore() here to prevent the response from being cached.
-  // This is equivalent to in fetch(..., {cache: 'no-store'}).
   noStore();
-
   try {
-    // Artificially delay a response for demo purposes.
-    // Don't do this in production :)
-
     console.log('Fetching revenue data...');
 
     const data = await sql<Revenue>`SELECT * FROM revenue`;
@@ -34,10 +28,10 @@ export async function fetchRevenue() {
   }
 }
 
-export async function fetchLatestInvoices() {
+export async function fetchLatestApplications() {
   noStore();
   try {
-    const data = await sql<LatestInvoiceRaw>`
+    const data = await sql<LatestApplicationRaw>`
       SELECT invoices.amount, customers.name, customers.image_url, customers.email, invoices.id
       FROM invoices
       JOIN customers ON invoices.customer_id = customers.id
@@ -51,16 +45,13 @@ export async function fetchLatestInvoices() {
     return latestInvoices;
   } catch (error) {
     console.error('Database Error:', error);
-    throw new Error('Failed to fetch the latest invoices.');
+    throw new Error('Failed to fetch the latest applications.');
   }
 }
 
 export async function fetchCardData() {
   noStore();
   try {
-    // You can probably combine these into a single SQL query
-    // However, we are intentionally splitting them to demonstrate
-    // how to initialize multiple queries in parallel with JS.
     const invoiceCountPromise = sql`SELECT COUNT(*) FROM invoices`;
     const customerCountPromise = sql`SELECT COUNT(*) FROM customers`;
     const invoiceStatusPromise = sql`SELECT
@@ -74,16 +65,18 @@ export async function fetchCardData() {
       invoiceStatusPromise,
     ]);
 
-    const numberOfInvoices = Number(data[0].rows[0].count ?? '0');
-    const numberOfCustomers = Number(data[1].rows[0].count ?? '0');
-    const totalPaidInvoices = formatCurrency(data[2].rows[0].paid ?? '0');
-    const totalPendingInvoices = formatCurrency(data[2].rows[0].pending ?? '0');
+    const numberOfApplications = Number(data[0].rows[0].count ?? '0');
+    const numberOfMasters = Number(data[1].rows[0].count ?? '0');
+    const totalPaidApplications = formatCurrency(data[2].rows[0].paid ?? '0');
+    const totalPendingApplications = formatCurrency(
+      data[2].rows[0].pending ?? '0',
+    );
 
     return {
-      numberOfCustomers,
-      numberOfInvoices,
-      totalPaidInvoices,
-      totalPendingInvoices,
+      numberOfMasters,
+      numberOfApplications,
+      totalPaidApplications,
+      totalPendingApplications,
     };
   } catch (error) {
     console.error('Database Error:', error);
@@ -93,7 +86,7 @@ export async function fetchCardData() {
 
 const ITEMS_PER_PAGE = 6;
 
-export async function fetchFilteredInvoices(
+export async function fetchFilteredApplications(
   query: string,
   currentPage: number,
 ) {
@@ -101,7 +94,7 @@ export async function fetchFilteredInvoices(
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
 
   try {
-    const invoices = await sql<InvoicesTable>`
+    const invoices = await sql<ApplicationsTable>`
       SELECT
         invoices.id,
         invoices.amount,
@@ -126,11 +119,11 @@ export async function fetchFilteredInvoices(
     return invoices.rows;
   } catch (error) {
     console.error('Database Error:', error);
-    throw new Error('Failed to fetch invoices.');
+    throw new Error('Failed to fetch applications.');
   }
 }
 
-export async function fetchInvoicesPages(query: string) {
+export async function fetchApplicationsPages(query: string) {
   noStore();
   try {
     const count = await sql`SELECT COUNT(*)
@@ -148,11 +141,11 @@ export async function fetchInvoicesPages(query: string) {
     return totalPages;
   } catch (error) {
     console.error('Database Error:', error);
-    throw new Error('Failed to fetch total number of invoices.');
+    throw new Error('Failed to fetch total number of applications.');
   }
 }
 
-export async function fetchCustomersPages(query: string) {
+export async function fetchMastersPages(query: string) {
   noStore();
 
   try {
@@ -167,14 +160,14 @@ export async function fetchCustomersPages(query: string) {
     return totalPages;
   } catch (error) {
     console.error('Database Error:', error);
-    throw new Error('Failed to fetch total number of customers.');
+    throw new Error('Failed to fetch total number of masters.');
   }
 }
 
-export async function fetchInvoiceById(id: string) {
+export async function fetchApplicationById(id: string) {
   noStore();
   try {
-    const data = await sql<InvoiceForm>`
+    const data = await sql<ApplicationForm>`
       SELECT
         invoices.id,
         invoices.customer_id,
@@ -198,10 +191,10 @@ export async function fetchInvoiceById(id: string) {
   }
 }
 
-export async function fetchCustomerById(id: string) {
+export async function fetchMasterById(id: string) {
   noStore();
   try {
-    const data = await sql<CustomerForm>`
+    const data = await sql<MasterForm>`
       SELECT
         customers.id,
         customers.name,
@@ -222,10 +215,10 @@ export async function fetchCustomerById(id: string) {
   }
 }
 
-export async function fetchCustomers() {
+export async function fetchMasters() {
   noStore();
   try {
-    const data = await sql<CustomerField>`
+    const data = await sql<MasterField>`
       SELECT
         id,
         name
@@ -238,18 +231,15 @@ export async function fetchCustomers() {
     return customers;
   } catch (err) {
     console.error('Database Error:', err);
-    throw new Error('Failed to fetch all customers.');
+    throw new Error('Failed to fetch all masters.');
   }
 }
 
-export async function fetchFilteredCustomers(
-  query: string,
-  currentPage: number,
-) {
+export async function fetchFilteredMasters(query: string, currentPage: number) {
   noStore();
   const offset = (currentPage - 1) * ITEMS_PER_PAGE;
   try {
-    const data = await sql<CustomersTableType>`
+    const data = await sql<MastersTableType>`
 		SELECT
 		  customers.id,
 		  customers.name,
@@ -315,7 +305,7 @@ export async function fetchActualWorkload(customerId: string) {
   }
 }
 
-export async function fetchInvoiceStateBeforeByInvoiceId(id: string) {
+export async function fetchApplicationStateBeforeByApplicationId(id: string) {
   noStore();
   try {
     const data = await sql`
