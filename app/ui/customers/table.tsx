@@ -43,13 +43,19 @@ export default async function CustomersTable({
                       </div>
                     </div>
                     <div className="flex w-full items-center justify-between border-b py-5">
-                      <div className="flex w-1/2 flex-col">
+                      <div className="flex w-1/3 flex-col">
                         <p className="text-xs">Pending</p>
                         <p className="font-medium">{customer.total_pending}</p>
                       </div>
-                      <div className="flex w-1/2 flex-col">
+                      <div className="flex w-1/3 flex-col">
                         <p className="text-xs">Paid</p>
                         <p className="font-medium">{customer.total_paid}</p>
+                      </div>
+                      <div className="flex w-1/3 flex-col">
+                        <p className="text-xs">Workload</p>
+                        <p className="font-medium">
+                          {customer.total_workload}/{customer.workload}
+                        </p>
                       </div>
                     </div>
                     <div className="pt-4 text-sm">
@@ -75,6 +81,9 @@ export default async function CustomersTable({
                     </th>
                     <th scope="col" className="px-4 py-5 font-medium">
                       Total Paid
+                    </th>
+                    <th scope="col" className="px-4 py-5 font-medium">
+                      Workload
                     </th>
                   </tr>
                 </thead>
@@ -105,6 +114,9 @@ export default async function CustomersTable({
                       </td>
                       <td className="whitespace-nowrap bg-white px-4 py-5 text-sm ">
                         {customer.total_paid}
+                      </td>
+                      <td className="whitespace-nowrap bg-white px-4 py-5 text-sm ">
+                        {customer.total_workload}/{customer.workload}
                       </td>
                       <td className="whitespace-nowrap bg-white py-3 pl-6 pr-3 group-first-of-type:rounded-md group-last-of-type:rounded-md">
                         <div className="flex justify-end gap-3">

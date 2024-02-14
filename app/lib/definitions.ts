@@ -53,6 +53,7 @@ export type InvoicesTable = {
   date: string;
   amount: number;
   status: 'pending' | 'paid';
+  complexity: number;
 };
 
 export type CustomersTableType = {
@@ -63,6 +64,8 @@ export type CustomersTableType = {
   total_invoices: number;
   total_pending: number;
   total_paid: number;
+  total_workload: number;
+  workload: number;
 };
 
 export type FormattedCustomersTable = {
@@ -85,6 +88,7 @@ export type InvoiceForm = {
   customer_id: string;
   amount: number;
   status: 'pending' | 'paid';
+  complexity: number;
 };
 export type CustomerForm = {
   id: string;

@@ -7,12 +7,17 @@ import { redirect } from 'next/navigation';
 import { signIn } from '@/auth';
 import { AuthError } from 'next-auth';
 import { imageUrls } from '@/app/lib/utils';
+import {
+  fetchActualWorkload,
+  fetchInvoiceStateBeforeByInvoiceId,
+} from '@/app/lib/data';
 
 export type StateInvoice = {
   errors?: {
     customerId?: string[];
     amount?: string[];
     status?: string[];
+    complexity?: string[];
   };
   message?: string | null;
 };
@@ -35,6 +40,10 @@ const FormSchemaInvoice = z.object({
   status: z.enum(['pending', 'paid'], {
     invalid_type_error: 'Please select an invoice status.',
   }),
+  complexity: z.coerce
+    .number()
+    .gt(0, { message: 'Please enter an complexity greater than 0.' })
+    .lt(11, { message: 'Please enter an complexity less than 11' }),
   date: z.string(),
 });
 
@@ -95,22 +104,31 @@ export async function createInvoice(
     customerId: formData.get('customerId'),
     amount: formData.get('amount'),
     status: formData.get('status'),
+    complexity: formData.get('complexity'),
   });
-  console.log(validatedFields);
-
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
       message: 'Missing Fields. Failed to Create Invoice.',
     };
   }
-  const { customerId, amount, status } = validatedFields.data;
+  const { customerId, amount, status, complexity } = validatedFields.data;
   const amountInCents = amount * 100;
   const date = new Date().toISOString().split('T')[0];
+
+  try {
+    const workload = await fetchActualWorkload(customerId);
+    if (workload + complexity >= 21 && status == 'pending') {
+      throw Error('Reduce complexity, worker is not omnipotent');
+    }
+  } catch (e: any) {
+    return { message: e.message };
+  }
+
   try {
     await sql`
-    INSERT INTO invoices (customer_id, amount, status, date)
-    VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
+    INSERT INTO invoices (customer_id, amount, status, date, complexity)
+    VALUES (${customerId}, ${amountInCents}, ${status}, ${date}, ${complexity})
   `;
   } catch (error) {
     return {
@@ -166,6 +184,7 @@ export async function updateInvoice(
     customerId: formData.get('customerId'),
     amount: formData.get('amount'),
     status: formData.get('status'),
+    complexity: formData.get('complexity'),
   });
 
   if (!validatedFields.success) {
@@ -175,13 +194,31 @@ export async function updateInvoice(
     };
   }
 
-  const { customerId, amount, status } = validatedFields.data;
+  const { customerId, amount, status, complexity } = validatedFields.data;
   const amountInCents = amount * 100;
+  try {
+    let workload = await fetchActualWorkload(customerId);
+    const invoiceStateBefore = await fetchInvoiceStateBeforeByInvoiceId(id);
 
+    if (customerId === invoiceStateBefore.customer_id) {
+      if (status === invoiceStateBefore.status) {
+        workload = workload - invoiceStateBefore.complexity;
+      }
+      if (workload + complexity >= 21 && status === 'pending') {
+        throw Error('Reduce complexity, worker is not omnipotent');
+      }
+    } else {
+      if (workload + complexity >= 21 && status === 'pending') {
+        throw Error('Reduce complexity, worker is not omnipotent');
+      }
+    }
+  } catch (e: any) {
+    return { message: e.message };
+  }
   try {
     await sql`
       UPDATE invoices
-      SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
+      SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}, complexity = ${complexity}
       WHERE id = ${id}
     `;
   } catch (error) {

@@ -107,6 +107,7 @@ export async function fetchFilteredInvoices(
         invoices.amount,
         invoices.date,
         invoices.status,
+        invoices.complexity,
         customers.name,
         customers.email,
         customers.image_url
@@ -178,7 +179,8 @@ export async function fetchInvoiceById(id: string) {
         invoices.id,
         invoices.customer_id,
         invoices.amount,
-        invoices.status
+        invoices.status,
+        invoices.complexity
       FROM invoices
       WHERE invoices.id = ${id};
     `;
@@ -253,9 +255,11 @@ export async function fetchFilteredCustomers(
 		  customers.name,
 		  customers.email,
 		  customers.image_url,
+		  customers.workload,
 		  COUNT(invoices.id) AS total_invoices,
 		  SUM(CASE WHEN invoices.status = 'pending' THEN invoices.amount ELSE 0 END) AS total_pending,
-		  SUM(CASE WHEN invoices.status = 'paid' THEN invoices.amount ELSE 0 END) AS total_paid
+		  SUM(CASE WHEN invoices.status = 'paid' THEN invoices.amount ELSE 0 END) AS total_paid,
+		  SUM(CASE WHEN invoices.status = 'pending' THEN invoices.complexity ELSE 0 END) AS total_workload
 		FROM customers
 		LEFT JOIN invoices ON customers.id = invoices.customer_id
 		WHERE
@@ -265,11 +269,12 @@ export async function fetchFilteredCustomers(
 		ORDER BY customers.name ASC
 		LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
 	  `;
-
+    console.log(data);
     const customers = data.rows.map((customer) => ({
       ...customer,
       total_pending: formatCurrency(customer.total_pending),
       total_paid: formatCurrency(customer.total_paid),
+      total_workload: customer.total_workload || 0,
     }));
 
     return customers;
@@ -286,5 +291,41 @@ export async function getUser(email: string) {
   } catch (error) {
     console.error('Failed to fetch user:', error);
     throw new Error('Failed to fetch user.');
+  }
+}
+
+export async function fetchActualWorkload(customerId: string) {
+  noStore();
+  try {
+    const totalWorkload = await sql`
+    SELECT
+		  SUM(CASE WHEN invoices.status = 'pending' THEN invoices.complexity ELSE 0 END) AS total_workload
+		FROM customers
+		LEFT JOIN invoices ON customers.id = invoices.customer_id
+		WHERE
+		customers.id = ${customerId}
+		`;
+
+    const workload = totalWorkload.rows.map((total_workload) => ({
+      ...total_workload,
+    }));
+    return +workload[0].total_workload;
+  } catch (e) {
+    throw new Error('Failed to fetch workload.');
+  }
+}
+
+export async function fetchInvoiceStateBeforeByInvoiceId(id: string) {
+  noStore();
+  try {
+    const data = await sql`
+SELECT customer_id, complexity, status FROM invoices WHERE id=${id}
+`;
+    const invoice = data.rows.map((invoice) => ({
+      ...invoice,
+    }));
+    return invoice[0];
+  } catch (e) {
+    throw new Error('Failed to fetch invoice before.');
   }
 }
