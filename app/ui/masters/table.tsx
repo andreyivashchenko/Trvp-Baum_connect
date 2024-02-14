@@ -56,8 +56,15 @@ export default async function MastersTable({
                         </p>
                       </div>
                     </div>
-                    <div className="pt-4 text-sm">
-                      <p>{master.total_invoices} applications</p>
+
+                    <div className="flex items-center justify-between pt-4">
+                      <div className="text-sm">
+                        <p>{master.total_invoices} applications</p>
+                      </div>
+                      <div className="flex justify-end gap-3">
+                        <UpdateMaster id={master.id} />
+                        <DeleteMaster id={master.id} />
+                      </div>
                     </div>
                   </div>
                 ))}

@@ -48,7 +48,7 @@ export default async function ApplicationsTable({
                       {formatCurrency(application.amount)}
                     </p>
                     <p>{formatDateToLocal(application.date)}</p>
-                    <p>{application.complexity}</p>
+                    <p>Complexity: {application.complexity}</p>
                   </div>
                   <div className="flex justify-end gap-2">
                     <UpdateApplication id={application.id} />
