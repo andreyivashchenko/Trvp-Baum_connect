@@ -1,16 +1,16 @@
 'use server';
 
-import { z } from 'zod';
-import { sql } from '@vercel/postgres';
-import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
-import { signIn } from '@/auth';
-import { AuthError } from 'next-auth';
-import { imageUrls } from '@/app/lib/utils';
 import {
   fetchActualWorkload,
   fetchApplicationStateBeforeByApplicationId,
 } from '@/app/lib/data';
+import { imageUrls } from '@/app/lib/utils';
+import { signIn } from '@/auth';
+import { sql } from '@vercel/postgres';
+import { AuthError } from 'next-auth';
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+import { z } from 'zod';
 
 export type StateApplication = {
   errors?: {
@@ -65,7 +65,6 @@ export async function createMaster(prevState: StateMaster, formData: FormData) {
     name: formData.get('name'),
     email: formData.get('email'),
   });
-  // console.log(validatedFields);
 
   if (!validatedFields.success) {
     return {

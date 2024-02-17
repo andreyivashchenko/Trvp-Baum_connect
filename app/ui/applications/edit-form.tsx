@@ -1,6 +1,8 @@
 'use client';
 
+import { updateApplication } from '@/app/lib/actions';
 import { ApplicationForm, MasterField } from '@/app/lib/definitions';
+import { Button } from '@/app/ui/button';
 import {
   CheckIcon,
   ClockIcon,
@@ -8,8 +10,6 @@ import {
   UserCircleIcon,
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
-import { Button } from '@/app/ui/button';
-import { updateApplication } from '@/app/lib/actions';
 import { useFormState } from 'react-dom';
 
 export default function EditInvoiceForm({

@@ -1,7 +1,8 @@
 'use client';
 
+import { createApplication } from '@/app/lib/actions';
 import { MasterField } from '@/app/lib/definitions';
-import Link from 'next/link';
+import { Button } from '@/app/ui/button';
 import {
   CheckIcon,
   ClockIcon,
@@ -9,8 +10,7 @@ import {
   CurrencyDollarIcon,
   UserCircleIcon,
 } from '@heroicons/react/24/outline';
-import { Button } from '@/app/ui/button';
-import { createApplication } from '@/app/lib/actions';
+import Link from 'next/link';
 import { useFormState } from 'react-dom';
 
 export default function Form({ masters }: { masters: MasterField[] }) {
@@ -20,7 +20,6 @@ export default function Form({ masters }: { masters: MasterField[] }) {
   return (
     <form action={dispatch}>
       <div className="rounded-md bg-gray-50 p-4 md:p-6">
-        {/* Customer Name */}
         <div className="mb-4">
           <label htmlFor="masterId" className="mb-2 block text-sm font-medium">
             Choose application

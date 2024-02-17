@@ -1,6 +1,6 @@
-import Form from '@/app/ui/applications/edit-form';
-import Breadcrumbs from '@/app/ui/applications/breadcrumbs';
 import { fetchApplicationById, fetchMasters } from '@/app/lib/data';
+import Breadcrumbs from '@/app/ui/applications/breadcrumbs';
+import Form from '@/app/ui/applications/edit-form';
 import { notFound } from 'next/navigation';
 
 export default async function Page({ params }: { params: { id: string } }) {
